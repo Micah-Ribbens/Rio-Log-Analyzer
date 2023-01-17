@@ -1,0 +1,12 @@
+{
+  "writeCleanedFile": false,
+  "cleanedFilePath": "cleaned_angles.txt",
+  "anglesFilePath": "angles.txt",
+  "graphStartGroup": "START",
+  "graphEndGroup": "END",
+  "writeGroupsFile": false,
+  "groupsFilePath": "groups.json",
+  "numberInGroup": 3,
+  "endStringGroup": "Pitch",
+   "groupLineIndex": 300
+}
