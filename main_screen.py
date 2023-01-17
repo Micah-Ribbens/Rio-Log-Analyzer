@@ -1,18 +1,18 @@
 # from base.dimensions import Dimensions
 # from gui_components.grid import Grid
-# from gui_components.screen import Screen
+from gui_components.screen import Screen
 from base.important_variables import *
 from base.colors import *
 from base.lines import LineSegment, Point
 from base.utility_functions import *
 # from gui_components.graph import Graph
-# from gui_components.text_box import TextBox
+from gui_components.text_box import TextBox
 import matplotlib.pyplot as plot
 
-class MainScreen:
+class MainScreen(Screen):
     """The main screen of the application"""
 
-    # run_button = TextBox("Run", 18, pleasing_green, white, True)
+    run_button = TextBox("Run", 18, pleasing_green, white, True)
     current_line = LineSegment(Point(0, 0), Point(0, 0))
     graphs = []
 
@@ -30,8 +30,8 @@ class MainScreen:
 
         self.do_if(SHOULD_WRITE_CLEANED_FILE, self.write_cleaned_file)
         self.do_if(SHOULD_WRITE_GROUPS_FILE, self.write_groups_file)
-        self.set_up_graphs()
-        # self.run_button.percentage_set_dimensions(0, 90, 100, 10, screen_length, screen_height)
+        # self.set_up_graphs()
+        self.run_button.percentage_set_dimensions(0, 90, 100, 10, screen_length, screen_height)
 
 
 
@@ -159,26 +159,28 @@ class MainScreen:
             self.change_current_line()
 
     def change_current_line(self):
-        config_json_file = json.load(open("config.json"))
-        group_line_index = config_json_file.get("groupLineIndex")
+        # config_json_file = json.load(open("config.json"))
+        # group_line_index = config_json_file.get("groupLineIndex")
+        #
+        # group_json_file = json.load(open(GROUPS_FILE_PATH))
+        #
+        # graph_start_group = config_json_file.get("graphStartGroup")
+        # graph_end_group = config_json_file.get("graphEndGroup")
+        #
+        # if graph_start_group == "START":
+        #     graph_start_group = 0
+        #
+        # if graph_end_group == "END":
+        #     graph_end_group = len(group_json_file.keys())
 
-        group_json_file = json.load(open(GROUPS_FILE_PATH))
+        # total_number_of_groups = graph_end_group - graph_start_group
+        # conversion_factor = screen_length / total_number_of_groups
+        # line_left_edge = conversion_factor * group_line_index
 
-        graph_start_group = config_json_file.get("graphStartGroup")
-        graph_end_group = config_json_file.get("graphEndGroup")
+        self.set_up_graphs()
 
-        if graph_start_group == "START":
-            graph_start_group = 0
-
-        if graph_end_group == "END":
-            graph_end_group = len(group_json_file.keys())
-
-        total_number_of_groups = graph_end_group - graph_start_group
-        conversion_factor = screen_length / total_number_of_groups
-        line_left_edge = conversion_factor * group_line_index
-
-        self.current_line = LineSegment(Point(line_left_edge, 0), Point(line_left_edge, screen_height))
+        # self.current_line = LineSegment(Point(line_left_edge, 0), Point(line_left_edge, screen_height))
 
     def get_components(self):
         # return [self.graph]
-        return self.graphs + [self.current_line, self.run_button]
+        return [self.run_button]

@@ -8,7 +8,7 @@ screen_height = 1200
 background_color = (200, 200, 200)
 
 keyboard = Keyboard()
-# game_window = Window(screen_length, screen_height, background_color, "Game Basics")
+game_window = Window(screen_length, screen_height, background_color, "Game Basics")
 
 
 json_file = json.load(open("config.json"))
