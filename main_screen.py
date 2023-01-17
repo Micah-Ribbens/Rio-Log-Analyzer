@@ -1,28 +1,39 @@
-from base.dimensions import Dimensions
-from gui_components.grid import Grid
-from gui_components.screen import Screen
+# from base.dimensions import Dimensions
+# from gui_components.grid import Grid
+# from gui_components.screen import Screen
 from base.important_variables import *
 from base.colors import *
 from base.lines import LineSegment, Point
 from base.utility_functions import *
-from gui_components.graph import Graph
-from gui_components.text_box import TextBox
+# from gui_components.graph import Graph
+# from gui_components.text_box import TextBox
+import matplotlib.pyplot as plot
 
-
-class MainScreen(Screen):
+class MainScreen:
     """The main screen of the application"""
 
-    run_button = TextBox("Run", 18, pleasing_green, white, True)
+    # run_button = TextBox("Run", 18, pleasing_green, white, True)
     current_line = LineSegment(Point(0, 0), Point(0, 0))
     graphs = []
 
     def __init__(self):
         """Initializes the screen"""
 
+        lines = [
+            LineSegment(Point(0, 0), Point(1, 5)),
+            LineSegment(Point(1, 5), Point(2, 8)),
+            LineSegment(Point(2, 8), Point(3, 0)),
+            LineSegment(Point(3, 0), Point(4, 2))
+        ]
+        # self.graph = Graph(lines, blue, False)
+        # self.graph.percentage_set_dimensions(0, 0, 100, 90)
+
         self.do_if(SHOULD_WRITE_CLEANED_FILE, self.write_cleaned_file)
         self.do_if(SHOULD_WRITE_GROUPS_FILE, self.write_groups_file)
         self.set_up_graphs()
-        self.run_button.percentage_set_dimensions(0, 90, 100, 10, screen_length, screen_height)
+        # self.run_button.percentage_set_dimensions(0, 90, 100, 10, screen_length, screen_height)
+
+
 
     def set_up_graphs(self):
         config_json_file = json.load(open("config.json"))
@@ -30,6 +41,7 @@ class MainScreen(Screen):
 
         graph_start_group = config_json_file.get("graphStartGroup")
         graph_end_group = config_json_file.get("graphEndGroup")
+        step_size = config_json_file.get("stepSize")
 
         if graph_start_group == "START":
             graph_start_group = 0
@@ -37,19 +49,23 @@ class MainScreen(Screen):
         if graph_end_group == "END":
             graph_end_group = len(group_json_file.keys())
 
-        grid = Grid(Dimensions(0, 0, screen_length, screen_height * .9), 3, None)
+        # grid = Grid(Dimensions(0, 0, screen_length, screen_height * .9), 3, None)
 
         yaw_values = self.get_gyro_values(graph_start_group, graph_end_group, "Yaw", group_json_file)
         roll_values = self.get_gyro_values(graph_start_group, graph_end_group, "Roll", group_json_file)
         pitch_values = self.get_gyro_values(graph_start_group, graph_end_group, "Pitch", group_json_file)
 
-        yaw_graph = Graph(self.get_gyro_base_lines(yaw_values), blue)
-        roll_graph = Graph(self.get_gyro_base_lines(roll_values), pleasing_green)
-        pitch_graph = Graph(self.get_gyro_base_lines(pitch_values), purple)
+        # yaw_graph = Graph(self.get_gyro_base_lines(yaw_values, step_size), blue)
+        # roll_graph = Graph(self.get_gyro_base_lines(roll_values, step_size), pleasing_green)
+        # pitch_graph = Graph(self.get_gyro_base_lines(pitch_values, step_size), purple)
 
-        self.graphs = [yaw_graph, roll_graph, pitch_graph]
+        figure, axis = plot.subplots(2, 2)
+        axis[1][1].set_title("All")
+        self.show_gyro_base_lines(yaw_values, step_size, blue, "Yaw", axis[0][0], axis[1][1])
+        self.show_gyro_base_lines(roll_values, step_size, pleasing_green, "Roll", axis[0][1], axis[1][1])
+        self.show_gyro_base_lines(pitch_values, step_size, purple, "Pitch", axis[1][0], axis[1][1])
+        plot.show()
 
-        grid.turn_into_grid(self.graphs, None, None)
 
     def get_gyro_values(self, graph_start_group, graph_end_group, gyro_type_name, json_file):
         return_value = []
@@ -60,17 +76,19 @@ class MainScreen(Screen):
 
         return return_value
 
-    def get_gyro_base_lines(self, gyro_values):
-        return_value = []
-        last_x_coordinate = 0
-        last_y_coordinate = gyro_values[0]
+    def show_gyro_base_lines(self, gyro_values, step_size, color, gyro_value_name, axis, figure2):
 
-        for x in range(len(gyro_values)):
-            return_value.append(LineSegment(Point(last_x_coordinate, last_y_coordinate), Point(x, gyro_values[x])))
-            last_x_coordinate = x
-            last_y_coordinate = gyro_values[x]
+        y_coordinates = []
+        x_coordinates = []
 
-        return return_value
+        for x in range(0, len(gyro_values), step_size):
+            x_coordinates.append(x)
+            y_coordinates.append(gyro_values[x])
+
+        axis.plot(x_coordinates, y_coordinates)
+        figure2.plot(x_coordinates, y_coordinates)
+
+        axis.set_title(gyro_value_name)
 
     def write_cleaned_file(self):
         angle_file = open(ANGLES_FILE_PATH, "r")
@@ -115,8 +133,6 @@ class MainScreen(Screen):
                 current_group_number += 1
 
         json.dump(groups_file_json, groups_file, indent=4)
-
-
     def get_index(self, string, substring):
         try:
             return string.index(substring) + len(substring)
@@ -164,4 +180,5 @@ class MainScreen(Screen):
         self.current_line = LineSegment(Point(line_left_edge, 0), Point(line_left_edge, screen_height))
 
     def get_components(self):
+        # return [self.graph]
         return self.graphs + [self.current_line, self.run_button]

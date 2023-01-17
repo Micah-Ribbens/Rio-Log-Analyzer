@@ -8,5 +8,6 @@
   "groupsFilePath": "groups.json",
   "numberInGroup": 3,
   "endStringGroup": "Pitch",
-   "groupLineIndex": 300
+  "groupLineIndex": 10,
+  "stepSize": 1
 }

@@ -1,5 +1,6 @@
 from copy import deepcopy
 
+from base.important_variables import screen_length, screen_height
 from base.lines import LineSegment, Point
 from gui_components.component import Component
 from base.colors import black
@@ -89,12 +90,24 @@ class Graph(Component):
 
         x_unit = self.length / (self.get_x_delta(points) + pow(10, -9))
         y_unit = self.height / (self.get_y_delta(points) + pow(10, -9))
+
+        print(self.get_x_delta(points), self.get_y_delta(points))
+        print(self.get_y_min(points), self.get_y_max(points))
+
+        total_graph_height = self.get_y_max(points) if self.get_y_max(points) > 0 else 0
+
+        if self.get_y_min(points) < 0:
+            total_graph_height += self.get_y_min(points) * -1
+
+        # y_unit = self.height / total_graph_height
         x_min = self.get_x_min(points)
         y_min = self.get_y_min(points)
 
         for point in points:
             x_delta = point.x_coordinate - x_min
             y_delta = point.y_coordinate - y_min
+            # y_delta = -1 * point.y_coordinate if point.y_coordinate < 0 else point.y_coordinate
+
             point.x_coordinate = self.left_edge + (x_unit * x_delta)
             point.y_coordinate = self.bottom_edge - (y_unit * y_delta)
 
@@ -103,5 +116,5 @@ class Graph(Component):
         self.scale_lines()
 
     def percentage_set_dimensions(self, percent_right, percent_down, percent_length, percent_height):
-        super().percentage_set_dimensions(percent_right, percent_down, percent_length, percent_height)
+        super().percentage_set_dimensions(percent_right, percent_down, percent_length, percent_height, screen_length, screen_height)
         self.scale_lines()

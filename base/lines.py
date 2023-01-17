@@ -1,7 +1,7 @@
 import pygame
 
 from base.colors import pleasing_green
-from base.important_variables import game_window
+# from base.important_variables import game_window
 from pygame_library import library_abstraction
 
 
