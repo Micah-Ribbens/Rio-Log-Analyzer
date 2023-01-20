@@ -1,5 +1,9 @@
 # from base.dimensions import Dimensions
 # from gui_components.grid import Grid
+import os
+
+from math import ceil
+
 from gui_components.screen import Screen
 from base.important_variables import *
 from base.colors import *
@@ -8,6 +12,7 @@ from base.utility_functions import *
 # from gui_components.graph import Graph
 from gui_components.text_box import TextBox
 import matplotlib.pyplot as plot
+import statistics
 
 class MainScreen(Screen):
     """The main screen of the application"""
@@ -19,53 +24,73 @@ class MainScreen(Screen):
     def __init__(self):
         """Initializes the screen"""
 
-        lines = [
-            LineSegment(Point(0, 0), Point(1, 5)),
-            LineSegment(Point(1, 5), Point(2, 8)),
-            LineSegment(Point(2, 8), Point(3, 0)),
-            LineSegment(Point(3, 0), Point(4, 2))
-        ]
-        # self.graph = Graph(lines, blue, False)
-        # self.graph.percentage_set_dimensions(0, 0, 100, 90)
+        # self.do_if(SHOULD_WRITE_CLEANED_FILE, self.write_cleaned_file)
+        # self.do_if(SHOULD_WRITE_GROUPS_FILE, self.write_groups_file)
+        # self.run_button.percentage_set_dimensions(0, 90, 100, 10, screen_length, screen_height)
+        # self.do_if(SHOULD_WRITE_STATS_GROUP_FILE, self.write_stats_group_file)
 
-        self.do_if(SHOULD_WRITE_CLEANED_FILE, self.write_cleaned_file)
-        self.do_if(SHOULD_WRITE_GROUPS_FILE, self.write_groups_file)
-        # self.set_up_graphs()
-        self.run_button.percentage_set_dimensions(0, 90, 100, 10, screen_length, screen_height)
+        # self.create_cleaned_files()
+        # self.create_group_files()
+        self.save_graphs()
 
+    def save_graphs(self):
+        angle_file_names = list(filter(lambda item: item.__contains__(".txt"), os.listdir("angle_paths")))
+        group_file_paths = [f"group_{angle_file_name[:-4]}.json" for angle_file_name in angle_file_names]
+        image_file_paths = [f"{angle_file_name[:-4]}.png" for angle_file_name in angle_file_names]
 
+        for x in range(len(group_file_paths)):
+            self.save_graph(image_file_paths[x], group_file_paths[x], 0, len(self.get_group_json_file(group_file_paths[x]).keys()), 1)
 
-    def set_up_graphs(self):
-        config_json_file = json.load(open("config.json"))
-        group_json_file = json.load(open(GROUPS_FILE_PATH))
+            plot.clf()
 
-        graph_start_group = config_json_file.get("graphStartGroup")
-        graph_end_group = config_json_file.get("graphEndGroup")
-        step_size = config_json_file.get("stepSize")
+    def create_cleaned_files(self):
+        angle_file_names = list(filter(lambda item: item.__contains__(".txt"), os.listdir("angle_paths")))
+        cleaned_file_paths = [f"cleaned_{angle_file_path}" for angle_file_path in angle_file_names]
 
-        if graph_start_group == "START":
-            graph_start_group = 0
+        for x in range(len(angle_file_names)):
+            self.write_cleaned_file(f"angle_paths/{angle_file_names[x]}", cleaned_file_paths[x])
 
-        if graph_end_group == "END":
-            graph_end_group = len(group_json_file.keys())
+    def create_group_files(self):
+        angle_file_names = list(filter(lambda item: item.__contains__(".txt"), os.listdir("angle_paths")))
+        cleaned_file_paths = [f"cleaned_{angle_file_path}" for angle_file_path in angle_file_names]
+        group_file_paths = [f"group_{angle_file_path[:-4]}.json" for angle_file_path in angle_file_names]
 
-        # grid = Grid(Dimensions(0, 0, screen_length, screen_height * .9), 3, None)
+        for x in range(len(cleaned_file_paths)):
+            self.write_groups_file(cleaned_file_paths[x], group_file_paths[x])
+
+    def set_up_graphs(self, group_json_file_path=None, graph_start_group=None, graph_end_group=None, step_size=None):
+        # self.do_if(SHOULD_WRITE_STATS_GROUP_FILE, self.write_stats_group_file)
+
+        group_json_file_path = group_json_file_path if group_json_file_path is not None else GROUPS_FILE_PATH
+        group_json_file = self.get_group_json_file(group_json_file_path)
+
+        file_graph_start_group, file_graph_end_group, file_step_size = self.get_group_file_numbers_from_config_file()
+        graph_start_group = graph_start_group if graph_start_group is not None else file_graph_start_group
+        graph_end_group = graph_end_group if graph_end_group is not None else file_graph_end_group
+        step_size = step_size if step_size is not None else file_step_size
+
 
         yaw_values = self.get_gyro_values(graph_start_group, graph_end_group, "Yaw", group_json_file)
         roll_values = self.get_gyro_values(graph_start_group, graph_end_group, "Roll", group_json_file)
         pitch_values = self.get_gyro_values(graph_start_group, graph_end_group, "Pitch", group_json_file)
 
-        # yaw_graph = Graph(self.get_gyro_base_lines(yaw_values, step_size), blue)
-        # roll_graph = Graph(self.get_gyro_base_lines(roll_values, step_size), pleasing_green)
-        # pitch_graph = Graph(self.get_gyro_base_lines(pitch_values, step_size), purple)
-
         figure, axis = plot.subplots(2, 2)
-        axis[1][1].set_title("All")
-        self.show_gyro_base_lines(yaw_values, step_size, blue, "Yaw", axis[0][0], axis[1][1])
-        self.show_gyro_base_lines(roll_values, step_size, pleasing_green, "Roll", axis[0][1], axis[1][1])
-        self.show_gyro_base_lines(pitch_values, step_size, purple, "Pitch", axis[1][0], axis[1][1])
+        figure.tight_layout()
+
+        all_gyro_values_graph = axis[1][1]
+
+        all_gyro_values_graph.set_title("All")
+        self.show_gyro_base_lines(yaw_values, step_size, "Yaw", axis[0][0], all_gyro_values_graph, "#f8d568")
+        self.show_gyro_base_lines(roll_values, step_size, "Roll", axis[0][1], all_gyro_values_graph, "red")
+        self.show_gyro_base_lines(pitch_values, step_size, "Pitch", axis[1][0], all_gyro_values_graph, "purple")
+
+    def show_graph(self, group_json_file_path=None):
+        self.set_up_graphs(group_json_file_path)
         plot.show()
 
+    def save_graph(self, file_name, group_json_file_path=None, graph_start_group=None, graph_end_group=None, step_size=None):
+        self.set_up_graphs(group_json_file_path, graph_start_group, graph_end_group, step_size)
+        plot.savefig(file_name)
 
     def get_gyro_values(self, graph_start_group, graph_end_group, gyro_type_name, json_file):
         return_value = []
@@ -76,7 +101,7 @@ class MainScreen(Screen):
 
         return return_value
 
-    def show_gyro_base_lines(self, gyro_values, step_size, color, gyro_value_name, axis, figure2):
+    def show_gyro_base_lines(self, gyro_values, step_size, gyro_value_name, current_gyro_value_graph, all_gryo_values_graph, color):
 
         y_coordinates = []
         x_coordinates = []
@@ -85,28 +110,35 @@ class MainScreen(Screen):
             x_coordinates.append(x)
             y_coordinates.append(gyro_values[x])
 
-        axis.plot(x_coordinates, y_coordinates)
-        figure2.plot(x_coordinates, y_coordinates)
+        current_gyro_value_graph.plot(x_coordinates, y_coordinates, color=color)
+        all_gryo_values_graph.plot(x_coordinates, y_coordinates, color=color)
 
-        axis.set_title(gyro_value_name)
+        current_gyro_value_graph.set_title(gyro_value_name)
 
-    def write_cleaned_file(self):
-        angle_file = open(ANGLES_FILE_PATH, "r")
+    def write_cleaned_file(self, angle_file_path=None, cleaned_file_path=None):
+
+        angle_file_path = angle_file_path if angle_file_path is not None else ANGLES_FILE_PATH
+        cleaned_file_path = cleaned_file_path if cleaned_file_path is not None else CLEANED_FILE_PATH
+
+        angle_file = open(angle_file_path, "r")
         angle_file_lines = get_items(angle_file.read(), "\n")
         angle_file.close()
 
         cleaned_file_lines = get_lines_containing(angle_file_lines, ["Roll", "Yaw", "Pitch"])
         
-        cleaned_file = open(CLEANED_FILE_PATH, "w+")
+        cleaned_file = open(cleaned_file_path, "w+")
         cleaned_file.write(get_string(cleaned_file_lines))
         cleaned_file.close()
     
-    def write_groups_file(self):
-        cleaned_file = open(CLEANED_FILE_PATH, "r")
+    def write_groups_file(self, cleaned_file_path=None, groups_file_path=None):
+        cleaned_file_path = cleaned_file_path if cleaned_file_path is not None else CLEANED_FILE_PATH
+        group_file_path = groups_file_path if groups_file_path is not None else GROUPS_FILE_PATH
+
+        cleaned_file = open(cleaned_file_path, "r")
         cleaned_file_lines = get_items(cleaned_file.read(), "\n")
         cleaned_file.close()
 
-        groups_file = open(GROUPS_FILE_PATH, "w+")
+        groups_file = open(group_file_path, "w+")
         groups_file_json = {}
         current_group_json = {}
         current_group_number = 1
@@ -119,7 +151,7 @@ class MainScreen(Screen):
             possible_indexes = [yaw_index, roll_index, pitch_index]
             line_start_names = ["Yaw", "Roll", "Pitch"]
 
-            index = self.get_valid_substring(possible_indexes)
+            index = self.get_valid_substring_index(possible_indexes)
             line_start_name = line_start_names[index]
             number_start_index = possible_indexes[index]
             number = float(cleaned_file_line[number_start_index:])
@@ -133,6 +165,98 @@ class MainScreen(Screen):
                 current_group_number += 1
 
         json.dump(groups_file_json, groups_file, indent=4)
+
+    def get_group_file_numbers_from_config_file(self):
+        """:returns: [graph_start_group, graph_end_group, step_size]; the numbers from the config file that deal with the group_json_file"""
+
+        config_json_file = self.get_config_json_file()
+        group_json_file = self.get_group_json_file()
+
+        graph_start_group = config_json_file.get("graphStartGroup")
+        graph_end_group = config_json_file.get("graphEndGroup")
+        step_size = config_json_file.get("stepSize")
+
+        if graph_start_group == "START":
+            graph_start_group = 0
+
+        if graph_end_group == "END":
+            graph_end_group = len(group_json_file.keys())
+
+        return [graph_start_group, graph_end_group, step_size]
+
+    def get_group_json_file(self, group_json_file_path=None):
+        """:returns: dictionary; the contents of the group json file gotten from json.load(file)"""
+
+        group_json_file_path = group_json_file_path if group_json_file_path is not None else GROUPS_FILE_PATH
+        return json.load(open(group_json_file_path))
+    def get_config_json_file(self):
+        """:returns: dictionary; the contents of the config json file gotten from json.load(file)"""
+
+        return json.load(open("config.json"))
+
+    def get_stats_group_file(self):
+        """:returns: dictionary; the contents of the stats group file"""
+
+        return json.load(open(STATS_GROUP_FILE_PATH))
+    def write_stats_group_file(self):
+        group_json_file = json.load(open(GROUPS_FILE_PATH))
+        graph_start_group, graph_end_group, step_size = self.get_group_file_numbers_from_config_file()
+
+        config_file = self.get_config_json_file()
+        stats_step_size = config_file.get("statsStepSize")
+
+        yaw_values = self.get_gyro_values(graph_start_group, graph_end_group, "Yaw", group_json_file)
+        roll_values = self.get_gyro_values(graph_start_group, graph_end_group, "Roll", group_json_file)
+        pitch_values = self.get_gyro_values(graph_start_group, graph_end_group, "Pitch", group_json_file)
+
+        statistics_groups_json = {"statsStepSize": stats_step_size}
+        current_group_item = {}
+        current_group_number = 1
+        graph_group_length = graph_end_group - graph_start_group
+        start_index = 0
+
+        for x in range(ceil(graph_group_length / stats_step_size)):
+            end_index = start_index + stats_step_size
+
+            if end_index >= graph_group_length:
+                end_index = graph_group_length
+
+            # Stats Data Can't be Analyzed if there is less than 2 data points
+            if end_index - start_index < 2:
+                break
+
+            yaw_vals = yaw_values[start_index: end_index]
+            roll_vals = roll_values[start_index: end_index]
+            pitch_vals = pitch_values[start_index: end_index]
+
+            yaw_stats = self.get_stats_values(yaw_vals)
+            roll_stats = self.get_stats_values(roll_vals)
+            pitch_stats = self.get_stats_values(pitch_vals)
+
+            # Adding 1 because groups and indexes are off by one. And adding graph_start_group because the groups
+            # May not start at 0. They could start at 100, 50, etc.
+            current_group_item["groupNumbers"] = f"{start_index + 1 + graph_start_group} - {end_index + 1 + graph_start_group   }"
+            self.set_stats_json_item(yaw_stats, "Yaw", current_group_item)
+            self.set_stats_json_item(roll_stats, "Roll", current_group_item)
+            self.set_stats_json_item(pitch_stats, "Pitch", current_group_item)
+
+            statistics_groups_json[current_group_number] = current_group_item
+            current_group_item = {}
+            current_group_number += 1
+            start_index += stats_step_size
+
+        json.dump(statistics_groups_json, open(STATS_GROUP_FILE_PATH, "w+"), indent=4)
+
+    def set_stats_json_item(self, stats, gyro_value_name, stats_json_item):
+        mean, standard_deviation, median, min__value, max__value, range_value = stats
+
+        stats_json_item[f"{gyro_value_name}-Mean"] = mean
+        stats_json_item[f"{gyro_value_name}-Standard-deviation"] = standard_deviation
+        stats_json_item[f"{gyro_value_name}-Median"] = median
+        stats_json_item[f"{gyro_value_name}-Min"] = min__value
+        stats_json_item[f"{gyro_value_name}-Max"] = max__value
+        stats_json_item[f"{gyro_value_name}-Range"] = range_value
+
     def get_index(self, string, substring):
         try:
             return string.index(substring) + len(substring)
@@ -140,7 +264,7 @@ class MainScreen(Screen):
         except:
             return -1
 
-    def get_valid_substring(self, possible_substring_start_indexes):
+    def get_valid_substring_index(self, possible_substring_start_indexes):
         return_value = 0
         for x in range(len(possible_substring_start_indexes)):
             possible_substring_start_index = possible_substring_start_indexes[x]
@@ -156,31 +280,21 @@ class MainScreen(Screen):
 
     def run(self):
         if self.run_button.got_clicked():
-            self.change_current_line()
+            self.show_graph()
 
-    def change_current_line(self):
-        # config_json_file = json.load(open("config.json"))
-        # group_line_index = config_json_file.get("groupLineIndex")
-        #
-        # group_json_file = json.load(open(GROUPS_FILE_PATH))
-        #
-        # graph_start_group = config_json_file.get("graphStartGroup")
-        # graph_end_group = config_json_file.get("graphEndGroup")
-        #
-        # if graph_start_group == "START":
-        #     graph_start_group = 0
-        #
-        # if graph_end_group == "END":
-        #     graph_end_group = len(group_json_file.keys())
+    def get_stats_values(self, values):
+        """:returns: [mean, standard_deviation, median, min, max, range_value] """
 
-        # total_number_of_groups = graph_end_group - graph_start_group
-        # conversion_factor = screen_length / total_number_of_groups
-        # line_left_edge = conversion_factor * group_line_index
+        sorted_values = sorted(values)
+        mean = statistics.mean(values)
+        standard_deviation = statistics.stdev(values, mean)
+        median = statistics.median(values)
 
-        self.set_up_graphs()
+        min_value = sorted_values[0]
+        max_value = sorted_values[1]
 
-        # self.current_line = LineSegment(Point(line_left_edge, 0), Point(line_left_edge, screen_height))
+        return [mean, standard_deviation, median, min_value, max_value, max_value - min_value]
 
     def get_components(self):
-        # return [self.graph]
         return [self.run_button]
+

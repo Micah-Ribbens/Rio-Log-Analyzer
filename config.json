@@ -1,13 +1,21 @@
 {
   "writeCleanedFile": false,
+  "writeGroupsFile": false,
+  "writeStatsGroupFile": false,
+  "savePictures": true,
+
   "cleanedFilePath": "cleaned_angles.txt",
   "anglesFilePath": "angles.txt",
-  "graphStartGroup": "START",
-  "graphEndGroup": 10,
-  "writeGroupsFile": false,
   "groupsFilePath": "groups.json",
-  "numberInGroup": 3,
+  "statsGroupFilePath": "stats_group.json",
+
+  "graphStartGroup": "START",
+  "graphEndGroup": "END",
   "endStringGroup": "Pitch",
+  "statsTypeWanted": "Mean",
+
+  "numberInGroup": 3,
   "groupLineIndex": 10,
-  "stepSize": 1
+  "stepSize": 20,
+  "statsStepSize": 5
 }
